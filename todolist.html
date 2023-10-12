@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<input type="text" id="todo">
+<button id="add-todo">Add</button>
+
+<div id="todo-list">
+    <ul>
+    </ul>
+</div>
+
+<script>
+    const socket = new WebSocket('ws://localhost:3000/ws/todo-list/1');
+
+    const addTodoButton = document.getElementById('add-todo');
+    const todoInput = document.getElementById('todo');
+    const todoList = document.getElementById('todo-list');
+    const updateButtons = document.getElementsByClassName('update');
+
+    addTodoButton.addEventListener('click', function () {
+        const todoitem = todoInput.value;
+        socket.send(JSON.stringify({
+            type: 'add',
+            content: todoitem
+        }));
+    });
+
+    socket.addEventListener('open', function (event) {
+        console.log('Connected to WS Server');
+    });
+
+    socket.addEventListener('message', function (event) {
+        console.log('Message from server ', event.data);
+        if (event.data.type === 'notify') {
+            console.log(event.data);
+        }
+        else if (event.data.type === 'saved') {
+            console.log(event.data);
+            const li = document.createElement('li');
+            const button = document.createElement('button');
+            li.innerText = event.data.content;
+            button.innerText = 'Update';
+            button.classList.add('update');
+            button.setAttribute('data-todo-id', event.data.todo_item_id);
+            todoList.appendChild(li);
+            todoList.appendChild(button);
+        }
+        else if (event.data.type === 'updated') {
+            console.log(event.data);
+            const li = document.createElement('li');
+            li.innerText = event.data.content;
+            todoList.appendChild(li);
+        }
+
+
+    });
+
+    socket.addEventListener('close', function (event) {
+        console.log('Disconnected from WS Server');
+    });
+</script>
+</body>
+</html>
